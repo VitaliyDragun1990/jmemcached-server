@@ -1,4 +1,4 @@
-package com.revenat.jmemcached.server;
+package com.revenat.jmemcached.server.domain;
 
 import com.revenat.jmemcached.protocol.model.Command;
 import com.revenat.jmemcached.protocol.model.Request;

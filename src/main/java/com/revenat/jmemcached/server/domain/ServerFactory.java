@@ -1,4 +1,4 @@
-package com.revenat.jmemcached.server;
+package com.revenat.jmemcached.server.domain;
 
 import java.util.Properties;
 

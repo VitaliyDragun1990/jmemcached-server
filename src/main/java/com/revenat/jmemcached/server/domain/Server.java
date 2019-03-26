@@ -1,4 +1,4 @@
-package com.revenat.jmemcached.server;
+package com.revenat.jmemcached.server.domain;
 
 /**
  * This interface represents JMemcached Server instance.

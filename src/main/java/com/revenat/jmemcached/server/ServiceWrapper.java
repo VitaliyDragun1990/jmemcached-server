@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.revenat.jmemcached.server.impl.JMemcachedServerFactory;
+import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerFactory;
+import com.revenat.jmemcached.server.domain.impl.JMemcachedServerFactory;
 
 /**
  * Special class responsible for starting and stopping {@code JMemcached} Server

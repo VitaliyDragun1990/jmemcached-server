@@ -9,7 +9,9 @@ import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.revenat.jmemcached.server.impl.JMemcachedServerFactory;
+import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerFactory;
+import com.revenat.jmemcached.server.domain.impl.JMemcachedServerFactory;
 
 /**
  * This component represents command line interface (CLI) to start and stop

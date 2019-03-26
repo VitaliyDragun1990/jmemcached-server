@@ -1,9 +1,9 @@
-package com.revenat.jmemcached.server.impl;
+package com.revenat.jmemcached.server.domain.impl;
 
 import java.util.Properties;
 
-import com.revenat.jmemcached.server.Server;
-import com.revenat.jmemcached.server.ServerFactory;
+import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerFactory;
 
 /**
  * Default implementation of the {@link ServerFactory}.

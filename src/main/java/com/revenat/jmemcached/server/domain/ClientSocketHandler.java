@@ -1,4 +1,4 @@
-package com.revenat.jmemcached.server;
+package com.revenat.jmemcached.server.domain;
 
 /**
  * Represents job for handling client's connection that should be done by

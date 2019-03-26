@@ -1,4 +1,4 @@
-package com.revenat.jmemcached.server;
+package com.revenat.jmemcached.server.domain;
 
 import java.net.Socket;
 import java.util.concurrent.ThreadFactory;
