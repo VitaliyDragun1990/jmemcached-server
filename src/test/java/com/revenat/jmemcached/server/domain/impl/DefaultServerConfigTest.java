@@ -276,7 +276,7 @@ public class DefaultServerConfigTest {
 	private DefaultServerConfig createServerConfig(final Storage storage) {
 		return new DefaultServerConfig(null, dateTimeProvider, resourceLoader) {
 			@Override
-			Storage createStorage() {
+			Storage createStorage(DateTimeProvider dateTimeProvider) {
 				return storage;
 			}
 		};

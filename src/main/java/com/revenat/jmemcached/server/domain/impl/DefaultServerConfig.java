@@ -34,7 +34,6 @@ class DefaultServerConfig implements ServerConfig {
 	private final ResponseWriter responseWriter;
 	private final Storage storage;
 	private final CommandHandler commandHandler;
-	private final DateTimeProvider dateTimeProvider;
 	
 	DefaultServerConfig(Properties overrideProperties, DateTimeProvider dateTimeProvider,
 			ResourceLoader resourceLoader) {
@@ -42,10 +41,9 @@ class DefaultServerConfig implements ServerConfig {
 		if (overrideProperties != null) {
 			applicationProperties.putAll(overrideProperties);
 		}
-		this.dateTimeProvider = dateTimeProvider;
 		this.requestReader = new RequestConverter();
 		this.responseWriter = new ResponseConverter();
-		this.storage = createStorage();
+		this.storage = createStorage(dateTimeProvider);
 		this.commandHandler = buildHandlersChain();
 	}
 
@@ -60,7 +58,7 @@ class DefaultServerConfig implements ServerConfig {
 		return handler;
 	}
 
-	Storage createStorage() {
+	Storage createStorage(DateTimeProvider dateTimeProvider) {
 		return new DefaultStorage(dateTimeProvider, getClearDataInterval());
 	}
 

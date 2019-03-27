@@ -40,18 +40,18 @@ public interface ServerConfig extends AutoCloseable {
 	CommandHandler getCommandHandler();
 
 	/**
-	 * Returns specific {@link ThreadFactory} instance responsible for building new
-	 * instances of the Server's worker {@link Thread}s.
-	 */
-	ThreadFactory getWorkerThreadFactory();
-
-	/**
 	 * Returns interval in milliseconds which designates how often server should
 	 * provide check for whether outdated data is present and clear it if needed.
 	 * 
 	 * @return interval in milliseconds
 	 */
 	int getClearDataInterval();
+	
+	/**
+	 * Returns specific {@link ThreadFactory} instance responsible for building new
+	 * instances of the Server's worker {@link Thread}s.
+	 */
+	ThreadFactory getWorkerThreadFactory();
 
 	/**
 	 * Returns port number server is listening on.
