@@ -11,9 +11,10 @@ import com.revenat.jmemcached.protocol.impl.RequestConverter;
 import com.revenat.jmemcached.protocol.impl.ResponseConverter;
 import com.revenat.jmemcached.server.domain.ClientSocketHandler;
 import com.revenat.jmemcached.server.domain.CommandHandler;
+import com.revenat.jmemcached.server.domain.DateTimeProvider;
+import com.revenat.jmemcached.server.domain.RequestProcessor;
 import com.revenat.jmemcached.server.domain.ResourceLoader;
 import com.revenat.jmemcached.server.domain.ServerConfig;
-import com.revenat.jmemcached.server.domain.DateTimeProvider;
 import com.revenat.jmemcached.server.domain.Storage;
 
 /**
@@ -34,6 +35,7 @@ class DefaultServerConfig implements ServerConfig {
 	private final ResponseWriter responseWriter;
 	private final Storage storage;
 	private final CommandHandler commandHandler;
+	private final RequestProcessor requestProcessor;
 	
 	DefaultServerConfig(Properties overrideProperties, DateTimeProvider dateTimeProvider,
 			ResourceLoader resourceLoader) {
@@ -45,6 +47,7 @@ class DefaultServerConfig implements ServerConfig {
 		this.responseWriter = new ResponseConverter();
 		this.storage = createStorage(dateTimeProvider);
 		this.commandHandler = buildHandlersChain();
+		this.requestProcessor = new DefaultRequestProcessor(requestReader, responseWriter, commandHandler);
 	}
 
 	private CommandHandler buildHandlersChain() {
@@ -60,26 +63,6 @@ class DefaultServerConfig implements ServerConfig {
 
 	Storage createStorage(DateTimeProvider dateTimeProvider) {
 		return new DefaultStorage(dateTimeProvider, getClearDataInterval());
-	}
-
-	@Override
-	public RequestReader getRequestReader() {
-		return requestReader;
-	}
-
-	@Override
-	public ResponseWriter getResponseWriter() {
-		return responseWriter;
-	}
-
-	@Override
-	public Storage getStorage() {
-		return storage;
-	}
-
-	@Override
-	public CommandHandler getCommandHandler() {
-		return commandHandler;
 	}
 
 	@Override
@@ -145,7 +128,7 @@ class DefaultServerConfig implements ServerConfig {
 
 	@Override
 	public ClientSocketHandler buildNewClientSocketHandler(Socket clientSocket) {
-		return new DefaultClientSocketHandler(clientSocket, requestReader, responseWriter, commandHandler);
+		return new DefaultClientSocketHandler(clientSocket, requestProcessor);
 	}
 	
 	@Override

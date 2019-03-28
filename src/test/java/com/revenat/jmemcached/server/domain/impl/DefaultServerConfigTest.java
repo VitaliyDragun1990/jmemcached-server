@@ -26,8 +26,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.revenat.jmemcached.exception.JMemcachedConfigException;
-import com.revenat.jmemcached.protocol.impl.RequestConverter;
-import com.revenat.jmemcached.protocol.impl.ResponseConverter;
 import com.revenat.jmemcached.server.domain.DateTimeProvider;
 import com.revenat.jmemcached.server.domain.ResourceLoader;
 import com.revenat.jmemcached.server.domain.Storage;
@@ -71,21 +69,6 @@ public class DefaultServerConfigTest {
 	public void setUp() {
 		when(resourceLoader.loadProperties(anyString())).thenReturn(new Properties(VALID_PROPERTIES));
 		serverConfig = new DefaultServerConfig(null, dateTimeProvider, resourceLoader);
-	}
-
-	@Test
-	public void shouldAllowToGetRequestReader() throws Exception {
-		assertThat(serverConfig.getRequestReader(), instanceOf(RequestConverter.class));
-	}
-	
-	@Test
-	public void shouldAllowToGetResponseWriter() throws Exception {
-		assertThat(serverConfig.getResponseWriter(), instanceOf(ResponseConverter.class));
-	}
-	
-	@Test
-	public void shouldAllowToGetStorage() throws Exception {
-		assertThat(serverConfig.getStorage(), instanceOf(DefaultStorage.class));
 	}
 	
 	@Test
@@ -136,11 +119,6 @@ public class DefaultServerConfigTest {
 		int maxThreadCount = serverConfig.getMaxThreadCount();
 		
 		assertThat(maxThreadCount, equalTo(10));
-	}
-	
-	@Test
-	public void shouldAllowToGetCommandHandler() throws Exception {
-		assertThat(serverConfig.getCommandHandler(), instanceOf(AbstractCommandHandler.class));
 	}
 	
 	@Test

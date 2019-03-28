@@ -12,12 +12,8 @@ import java.net.SocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.revenat.jmemcached.protocol.RequestReader;
-import com.revenat.jmemcached.protocol.ResponseWriter;
-import com.revenat.jmemcached.protocol.model.Request;
-import com.revenat.jmemcached.protocol.model.Response;
 import com.revenat.jmemcached.server.domain.ClientSocketHandler;
-import com.revenat.jmemcached.server.domain.CommandHandler;
+import com.revenat.jmemcached.server.domain.RequestProcessor;
 
 /**
  * Default implementation of the {@link ClientSocketHandler} interface.
@@ -29,15 +25,11 @@ class DefaultClientSocketHandler implements ClientSocketHandler {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientSocketHandler.class);
 	
 	private final Socket clientSocket;
-	private final RequestReader requestReader;
-	private final ResponseWriter responseWriter;
-	private final CommandHandler commandHandler;
-	
-	DefaultClientSocketHandler(Socket clientSocket, RequestReader reader, ResponseWriter writer, CommandHandler handler) {
+	private final RequestProcessor requestProcessor;
+
+	DefaultClientSocketHandler(Socket clientSocket, RequestProcessor requestProcessor) {
 		this.clientSocket = requireNonNull(clientSocket, "clientSocket can not be null");
-		this.requestReader = requireNonNull(reader, "requestReader can not be null");
-		this.responseWriter = requireNonNull(writer, "responseWriter can not be null");
-		this.commandHandler = requireNonNull(handler, "commandHandler can not be null");
+		this.requestProcessor =  requireNonNull(requestProcessor, "requestProcessor can not be null");
 	}
 
 	@Override
@@ -47,7 +39,7 @@ class DefaultClientSocketHandler implements ClientSocketHandler {
 			OutputStream clientOutput = clientSocket.getOutputStream();
 			
 			while (shouldContinue()) {
-				handleClientRequest(clientInput, clientOutput);
+				requestProcessor.process(clientInput, clientOutput);
 			}
 		} catch (EOFException | SocketException e) {
 			LOGGER.info("Remote client connection closed: {}: {}", clientSocket.getRemoteSocketAddress(), e.getMessage());
@@ -62,17 +54,6 @@ class DefaultClientSocketHandler implements ClientSocketHandler {
 	
 	private boolean shouldContinue() {
 		return !Thread.interrupted();
-	}
-
-	private void handleClientRequest(InputStream clientInput, OutputStream clientOutput) throws IOException {
-		try {
-			Request request = requestReader.readFrom(clientInput);
-			Response response = commandHandler.handle(request);
-			responseWriter.writeTo(clientOutput, response);
-			LOGGER.debug("Command {} -> {}", request, response);
-		} catch (RuntimeException e) {
-			LOGGER.error("Handle request failed: " + e.getMessage(), e);
-		}
 	}
 	
 	private void closeClientSocket() {

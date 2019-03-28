@@ -1,18 +1,15 @@
 package com.revenat.jmemcached.server.domain.impl;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,28 +24,15 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import com.revenat.jmemcached.protocol.RequestReader;
-import com.revenat.jmemcached.protocol.ResponseWriter;
-import com.revenat.jmemcached.protocol.model.Command;
-import com.revenat.jmemcached.protocol.model.Request;
-import com.revenat.jmemcached.protocol.model.Response;
-import com.revenat.jmemcached.protocol.model.Status;
-import com.revenat.jmemcached.server.domain.CommandHandler;
+import com.revenat.jmemcached.server.domain.RequestProcessor;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultClientSocketHandlerTest {
-	private static final Request ANY_REQUEST = Request.empty(Command.CLEAR);
-	private static final Response ANY_RESPONSE = Response.empty(Status.CLEARED);
-	
 	private ByteArrayInputStream clientInput = new ByteArrayInputStream(new byte[0]);
 	private ByteArrayOutputStream clientOutput = new ByteArrayOutputStream();
 	
 	@Mock
-	private RequestReader requestReader;
-	@Mock
-	private ResponseWriter responseWriter;
-	@Mock
-	private CommandHandler commandHandler;
+	private RequestProcessor requestProcessor;
 	
 	private Socket clientSocket;
 	
@@ -57,42 +41,32 @@ public class DefaultClientSocketHandlerTest {
 	@Before
 	public void setUp() throws IOException {
 		clientSocket = new SocketStub(clientInput, clientOutput);
-		socketHandler = new DefaultClientSocketHandler(clientSocket, requestReader, responseWriter, commandHandler);
-		setupMocks();
+		socketHandler = new DefaultClientSocketHandler(clientSocket, requestProcessor);
+		clientDisconnectAfterFirstRequest();
 	}
 
-	private void setupMocks() throws IOException {
-		when(requestReader.readFrom(any(InputStream.class))).thenReturn(ANY_REQUEST).thenThrow(IOException.class);
-		when(commandHandler.handle(any(Request.class))).thenReturn(ANY_RESPONSE);
+	private void clientDisconnectAfterFirstRequest() throws IOException {
 		doAnswer(new Answer<Void>() {
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
-				OutputStream out = invocation.getArgument(0);
-				out.write(1);
-				out.flush();
 				return null;
 			}
-		}).when(responseWriter).writeTo(any(OutputStream.class), any(Response.class));
+		}).doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				throw new EOFException();
+			}
+		}).when(requestProcessor).process(any(InputStream.class), any(OutputStream.class));
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void shouldNotAllowToConstructWithNullClientSocket() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(null, requestReader, responseWriter, commandHandler);
+		socketHandler = new DefaultClientSocketHandler(null, requestProcessor);
 	}
 	
 	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToConstructWithNullRequestReader() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(clientSocket, null, responseWriter, commandHandler);
-	}
-	
-	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToConstructWithNullResponseWriter() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(clientSocket, requestReader, null, commandHandler);
-	}
-	
-	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToConstructWithNullCommandHandler() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(clientSocket, requestReader, responseWriter, null);
+	public void shouldNotAllowToConstructWithNullRequestProcessor() throws Exception {
+		socketHandler = new DefaultClientSocketHandler(clientSocket, null);
 	}
 	
 	@Test
@@ -102,10 +76,7 @@ public class DefaultClientSocketHandlerTest {
 		
 		TimeUnit.SECONDS.sleep(1);
 		
-		assertThat(clientOutput.toByteArray().length, greaterThan(0));
-		verify(requestReader, atLeast(1)).readFrom(any(InputStream.class));
-		verify(commandHandler, atLeast(1)).handle(any(Request.class));
-		verify(responseWriter, atLeast(1)).writeTo(any(OutputStream.class), any(Response.class));
+		verify(requestProcessor, atLeast(1)).process(any(InputStream.class), any(OutputStream.class));
 	}
 	
 	@Test
@@ -125,10 +96,7 @@ public class DefaultClientSocketHandlerTest {
 		
 		TimeUnit.SECONDS.sleep(1);
 		
-		assertThat(clientOutput.toByteArray().length, equalTo(0));
-		verifyZeroInteractions(requestReader);
-		verifyZeroInteractions(commandHandler);
-		verifyZeroInteractions(responseWriter);
+		verifyZeroInteractions(requestProcessor);
 	}
 
 	private static Thread createSeparateThread(DefaultClientSocketHandler socketHandler) {

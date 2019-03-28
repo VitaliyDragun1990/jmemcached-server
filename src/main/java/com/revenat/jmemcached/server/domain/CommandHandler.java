@@ -5,8 +5,9 @@ import com.revenat.jmemcached.protocol.model.Request;
 import com.revenat.jmemcached.protocol.model.Response;
 
 /**
- * This interface represents component responsible for handling client's
- * {@link Request} depending on {@link Command} one contains.
+ * This interface represents component responsible for handling {@link Request}
+ * and creating appropriate {@link Response} depending on {@link Request}'s
+ * {@link Command}.
  * 
  * @author Vitaly Dragun
  *
