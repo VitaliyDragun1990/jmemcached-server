@@ -2,19 +2,24 @@ package com.revenat.jmemcached.server.domain.impl;
 
 import java.net.Socket;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.revenat.jmemcached.exception.JMemcachedConfigException;
 import com.revenat.jmemcached.protocol.RequestReader;
 import com.revenat.jmemcached.protocol.ResponseWriter;
 import com.revenat.jmemcached.protocol.impl.RequestConverter;
 import com.revenat.jmemcached.protocol.impl.ResponseConverter;
-import com.revenat.jmemcached.server.domain.ClientSocketHandler;
+import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.CommandHandler;
 import com.revenat.jmemcached.server.domain.DateTimeProvider;
 import com.revenat.jmemcached.server.domain.RequestProcessor;
 import com.revenat.jmemcached.server.domain.ResourceLoader;
 import com.revenat.jmemcached.server.domain.ServerConfig;
+import com.revenat.jmemcached.server.domain.ServerConnectionManager;
 import com.revenat.jmemcached.server.domain.Storage;
 
 /**
@@ -77,6 +82,20 @@ class DefaultServerConfig implements ServerConfig {
 			}
 		};
 	}
+	
+	ExecutorService createWorkerThreadPool() {
+		return new ThreadPoolExecutor(getInitThreadCount(),
+				getMaxThreadCount(),
+				60L,
+				TimeUnit.SECONDS,
+				new SynchronousQueue<>(),
+				getWorkerThreadFactory(),
+				new ThreadPoolExecutor.AbortPolicy());
+	}
+	
+	public ServerConnectionManager buildServerConnectionManager() {
+		return new DefaultServerConnectionManager(createWorkerThreadPool());
+	}
 
 	@Override
 	public int getClearDataInterval() {
@@ -127,8 +146,8 @@ class DefaultServerConfig implements ServerConfig {
 	}
 
 	@Override
-	public ClientSocketHandler buildNewClientSocketHandler(Socket clientSocket) {
-		return new DefaultClientSocketHandler(clientSocket, requestProcessor);
+	public ClientConnectionHandler buildNewClientConnectionHandler(Socket clientSocket) {
+		return new DefaultClientConnectionHandler(clientSocket, requestProcessor);
 	}
 	
 	@Override

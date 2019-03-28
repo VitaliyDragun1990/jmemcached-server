@@ -1,10 +1,10 @@
 package com.revenat.jmemcached.server.domain.impl;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -33,7 +33,7 @@ class DefaultServer implements Server {
 	private volatile boolean serverStopped;
 	
 	DefaultServer(ServerConfig serverConfig) {
-		this.config = serverConfig;
+		this.config = requireNonNull(serverConfig, "serverConfig can not be null");
 		this.serverSocket = createServerSocket();
 		this.executorService = createExecutorService();
 		this.mainServerThread = createMainServerThread(createServerJob());
@@ -58,40 +58,19 @@ class DefaultServer implements Server {
 	}
 
 	Runnable createServerJob() {
-		return new Runnable() {
-			@Override
-			public void run() {
-				while (!mainServerThread .isInterrupted()) {
-					try {
-						Socket clientSocket = serverSocket.accept();
-						try {
-							executorService.submit(config.buildNewClientSocketHandler(clientSocket));
-							LOGGER.info("A new client connection has been established: {}",
-									clientSocket.getRemoteSocketAddress());
-						} catch (RejectedExecutionException e) {
-							LOGGER.error("All worker threads are busy: new connection attempt has been rejected: {}",
-									e.getMessage());
-							clientSocket.close();
-						}
-					} catch (IOException e) {
-						if (!serverSocket.isClosed()) {
-							LOGGER.error("Can't accept client connection: " + e.getMessage(), e);
-						}
-						destroyJMemcachedServer();
-						break;
-					}
-				}
-			}
-		};
+		return new ServerTask(serverSocket,
+				client -> executorService.submit(config.buildNewClientConnectionHandler(client)),
+				this::shutdownServer);
 	}
 
-	void destroyJMemcachedServer() {
+	void shutdownServer() {
 		try {
 			config.close();
 		} catch (Exception e) {
 			LOGGER.error("ServerConfig close failed: " + e.getMessage(), e);
 		}
 		executorService.shutdownNow();
+		closeServerSocket();
 		LOGGER.info("Server stopped");
 		serverStopped = true;
 	}
@@ -118,7 +97,7 @@ class DefaultServer implements Server {
 	Thread getShutdownHook() {
 		return new Thread(() ->  {
 			if (!serverStopped) {
-				destroyJMemcachedServer();
+				shutdownServer();
 			}
 		}, "ShutdownHook") ;
 	}
@@ -132,7 +111,9 @@ class DefaultServer implements Server {
 
 	void closeServerSocket() {
 		try {
-			serverSocket.close();
+			if (!serverSocket.isClosed()) {
+				serverSocket.close();
+			}
 		} catch (IOException e) {
 			LOGGER.warn("Error while closing server socket: " + e.getMessage(), e);
 		}

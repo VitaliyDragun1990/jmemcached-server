@@ -27,7 +27,7 @@ import org.mockito.stubbing.Answer;
 import com.revenat.jmemcached.server.domain.RequestProcessor;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class DefaultClientSocketHandlerTest {
+public class DefaultClientConnectionHandlerTest {
 	private ByteArrayInputStream clientInput = new ByteArrayInputStream(new byte[0]);
 	private ByteArrayOutputStream clientOutput = new ByteArrayOutputStream();
 	
@@ -36,12 +36,12 @@ public class DefaultClientSocketHandlerTest {
 	
 	private Socket clientSocket;
 	
-	private DefaultClientSocketHandler socketHandler;
+	private DefaultClientConnectionHandler socketHandler;
 	
 	@Before
 	public void setUp() throws IOException {
 		clientSocket = new SocketStub(clientInput, clientOutput);
-		socketHandler = new DefaultClientSocketHandler(clientSocket, requestProcessor);
+		socketHandler = new DefaultClientConnectionHandler(clientSocket, requestProcessor);
 		clientDisconnectAfterFirstRequest();
 	}
 
@@ -61,12 +61,12 @@ public class DefaultClientSocketHandlerTest {
 
 	@Test(expected = NullPointerException.class)
 	public void shouldNotAllowToConstructWithNullClientSocket() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(null, requestProcessor);
+		socketHandler = new DefaultClientConnectionHandler(null, requestProcessor);
 	}
 	
 	@Test(expected = NullPointerException.class)
 	public void shouldNotAllowToConstructWithNullRequestProcessor() throws Exception {
-		socketHandler = new DefaultClientSocketHandler(clientSocket, null);
+		socketHandler = new DefaultClientConnectionHandler(clientSocket, null);
 	}
 	
 	@Test
@@ -99,7 +99,7 @@ public class DefaultClientSocketHandlerTest {
 		verifyZeroInteractions(requestProcessor);
 	}
 
-	private static Thread createSeparateThread(DefaultClientSocketHandler socketHandler) {
+	private static Thread createSeparateThread(DefaultClientConnectionHandler socketHandler) {
 		Thread t = new Thread(socketHandler);
 		t.setDaemon(true);
 		return t;

@@ -122,10 +122,10 @@ public class DefaultServerConfigTest {
 	}
 	
 	@Test
-	public void shouldAllowToGetClientSocketHandler() throws Exception {
+	public void shouldAllowToGetClientConnectionHandler() throws Exception {
 		Socket clientSocket = new Socket();
 		
-		assertThat(serverConfig.buildNewClientSocketHandler(clientSocket), instanceOf(DefaultClientSocketHandler.class));
+		assertThat(serverConfig.buildNewClientConnectionHandler(clientSocket), instanceOf(DefaultClientConnectionHandler.class));
 	}
 	
 	@Test

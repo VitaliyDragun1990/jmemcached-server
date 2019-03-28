@@ -12,22 +12,23 @@ import java.net.SocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.revenat.jmemcached.server.domain.ClientSocketHandler;
+import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.RequestProcessor;
 
 /**
- * Default implementation of the {@link ClientSocketHandler} interface.
+ * Default implementation of the {@link ClientConnectionHandler} interface.
+ * Uses {@link Socket} to represents connection with a client.
  * 
  * @author Vitaly Dragun
  *
  */
-class DefaultClientSocketHandler implements ClientSocketHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientSocketHandler.class);
+class DefaultClientConnectionHandler implements ClientConnectionHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClientConnectionHandler.class);
 	
 	private final Socket clientSocket;
 	private final RequestProcessor requestProcessor;
 
-	DefaultClientSocketHandler(Socket clientSocket, RequestProcessor requestProcessor) {
+	DefaultClientConnectionHandler(Socket clientSocket, RequestProcessor requestProcessor) {
 		this.clientSocket = requireNonNull(clientSocket, "clientSocket can not be null");
 		this.requestProcessor =  requireNonNull(requestProcessor, "requestProcessor can not be null");
 	}

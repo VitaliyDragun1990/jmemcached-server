@@ -44,11 +44,11 @@ public interface ServerConfig extends AutoCloseable {
 	int getMaxThreadCount();
 
 	/**
-	 * Builds new {@link ClientSocketHandler} instance for handling client's
+	 * Builds new {@link ClientConnectionHandler} instance for handling client's
 	 * {@link Socket} connection
 	 * 
 	 * @param clientSocket {@link Socket} representing client's connection with the
 	 *                     server.
 	 */
-	ClientSocketHandler buildNewClientSocketHandler(Socket clientSocket);
+	ClientConnectionHandler buildNewClientConnectionHandler(Socket clientSocket);
 }
