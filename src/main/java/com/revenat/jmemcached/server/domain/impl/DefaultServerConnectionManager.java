@@ -24,9 +24,9 @@ class DefaultServerConnectionManager implements ServerConnectionManager {
 	}
 
 	@Override
-	public void submit(ClientConnectionHandler task) {
+	public void submit(ClientConnectionHandler connectionHandler) {
 		try {
-			threadPool.submit(task);
+			threadPool.submit(connectionHandler);
 		} catch (RejectedExecutionException e) {
 			throw new ConnectionRejectedException("All worker threads are busy: new connection attempt has been rejected.", e);
 		}

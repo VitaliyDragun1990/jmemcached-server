@@ -10,76 +10,72 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.revenat.jmemcached.exception.JMemcachedException;
+import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerConnectionManager;
+import com.revenat.jmemcached.server.domain.ServerContext;
 
 /**
- * This {@link Runnable} implementation represents main server task of
- * receiving client's connections and appropriately handling them.
+ * This {@link Runnable} implementation represents main server task of receiving
+ * client's connections and appropriately handling them.
  * 
  * @author Vitaly Dragun
  *
  */
 class ServerTask implements Runnable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerTask.class);
+
+	private Server server;
+	private final ServerContext serverContext;
+
+	ServerTask(ServerContext serverContext) {
+		this.serverContext = requireNonNull(serverContext, "serverContext can not be null");
+	}
 	
-	private final ServerSocket serverSocket;
-	private final ClientSocketHandler clientSocketHandler;
-	private final ServerShutdownHandler shutdownServerHandler;
-	
-	ServerTask(ServerSocket serverSocket, ClientSocketHandler clientSocketHandler,
-			ServerShutdownHandler shutdownServerHandler) {
-		this.serverSocket = requireNonNull(serverSocket, "serverSocket can not be null");
-		this.clientSocketHandler = requireNonNull(clientSocketHandler, "clientSocketHandler can not be null");
-		this.shutdownServerHandler = requireNonNull(shutdownServerHandler, "shutdownServerHandler can not be null");
+	public void setServer(Server server) {
+		this.server = requireNonNull(server, "server can not be null");
 	}
 
 	@Override
 	public void run() {
-		while (!Thread.currentThread() .isInterrupted()) {
+		if (server != null) {
+			handleServerTask();
+		} else {
+			throw new JMemcachedException("Can not start server task without server refrerence.");
+		}
+	}
+
+	/**
+	 * Shutdowns this server task, appropriately closing all resources. This method
+	 * must be called in order to for sure close {@link ServerTask}
+	 */
+	public void shutdown() {
+		serverContext.close();
+	}
+
+	private void handleServerTask() {
+		ServerSocket serverSocket = serverContext.getServerSocket();
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
 				Socket clientSocket = serverSocket.accept();
 				handleClientSocket(clientSocket);
 			} catch (IOException e) {
-				if (!serverSocket.isClosed()) {
+				if (!serverSocket.isClosed()) { // this means it's not a server called shutdown on this
 					LOGGER.error("Can't accept client connection: " + e.getMessage(), e);
+					server.stop();
 				}
-				shutdownServerHandler.shutdownServer();
 				break;
 			}
 		}
 	}
 
-	void handleClientSocket(Socket clientSocket) throws IOException {
+	private void handleClientSocket(Socket clientSocket) throws IOException {
+		ServerConnectionManager connectionManager = serverContext.getServerConnectionManager();
 		try {
-			clientSocketHandler.handle(clientSocket);
-			LOGGER.info("A new client connection has been established: {}",
-					clientSocket.getRemoteSocketAddress());
+			connectionManager.submit(serverContext.buildNewClientConnectionHandler(clientSocket));
+			LOGGER.info("A new client connection has been established: {}", clientSocket.getRemoteSocketAddress());
 		} catch (JMemcachedException e) {
 			LOGGER.error(e.getMessage());
 			clientSocket.close();
 		}
-	}
-	
-	/**
-	 * This interface represents function of handling client's
-	 * {@link Socket} in some meaningful way.
-	 * 
-	 * @author Vitaly Dragun
-	 *
-	 */
-	@FunctionalInterface
-	static interface ClientSocketHandler {
-		void handle(Socket clientSocket);
-	}
-	
-	/**
-	 * This interface represents function of
-	 * shutdown server.
-	 * 
-	 * @author Vitaly Dragun
-	 *
-	 */
-	@FunctionalInterface
-	static interface ServerShutdownHandler {
-		void shutdownServer();
 	}
 }

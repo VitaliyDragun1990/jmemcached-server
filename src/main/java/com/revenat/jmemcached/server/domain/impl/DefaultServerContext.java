@@ -1,14 +1,17 @@
 package com.revenat.jmemcached.server.domain.impl;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
 
-import com.revenat.jmemcached.protocol.RequestReader;
-import com.revenat.jmemcached.protocol.ResponseWriter;
-import com.revenat.jmemcached.protocol.impl.RequestConverter;
-import com.revenat.jmemcached.protocol.impl.ResponseConverter;
-import com.revenat.jmemcached.server.domain.CommandHandler;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
+import com.revenat.jmemcached.server.domain.ServerConfig;
+import com.revenat.jmemcached.server.domain.ServerConnectionManager;
 import com.revenat.jmemcached.server.domain.ServerContext;
-import com.revenat.jmemcached.server.domain.Storage;
 
 /**
  * Default implementation of the {@link ServerContext} interface.
@@ -17,31 +20,58 @@ import com.revenat.jmemcached.server.domain.Storage;
  *
  */
 class DefaultServerContext implements ServerContext {
-	private final Storage storage;
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultServerContext.class);
 	
-	DefaultServerContext(Storage storage) {
-		this.storage = Objects.requireNonNull(storage, "storage can not be null");
-	}
-
-	@Override
-	public RequestReader getRequestReader() {
-		return new RequestConverter() ;
-	}
-
-	@Override
-	public ResponseWriter getResponseWriter() {
-		return new ResponseConverter();
-	}
-
-	@Override
-	public CommandHandler getCommandHandler() {
-		AbstractCommandHandler handler = new GetCommandHandler(storage);
-
-		handler.add(new PutCommandHandler(storage));
-		handler.add(new RemoveCommandHandler(storage));
-		handler.add(new ClearCommandHandler(storage));
-		handler.add(new UnsupportedCommandHandler(storage));
+	private final ServerConnectionManager connectionManager;
+	private final ServerSocket serverSocket;
+	private final ClientConnectionHandlerFactory handlerFactory;
+	
+	DefaultServerContext(ServerConfig serverConfig,
+						 ServerSocketFactory socketFactory,
+						 ServerConnectionManagerFactory connectionManagerFactory,
+						 ClientConnectionHandlerFactory connectionHandlerFactory
+			) {
+		requireNonNull(serverConfig, "serverConfig can not be null");
+		requireNonNull(socketFactory, "socketFactory can not be null");
+		requireNonNull(connectionManagerFactory, "connectionManagerFactory can not be null");
+		requireNonNull(connectionHandlerFactory, "connectionHandlerFactory can not be null");
 		
-		return handler;
+		int maxThreadCount = serverConfig.getMaxThreadCount();
+		int initThreadCount = serverConfig.getInitThreadCount();
+		int serverPort = serverConfig.getServerPort();
+		
+		this.handlerFactory = connectionHandlerFactory;
+		this.connectionManager = connectionManagerFactory.createServerConnectionManager(initThreadCount, maxThreadCount);
+		this.serverSocket = socketFactory.createServerSocket(serverPort);
+	}
+
+	@Override
+	public ServerSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	@Override
+	public ServerConnectionManager getServerConnectionManager() {
+		return connectionManager;
+	}
+
+	@Override
+	public ClientConnectionHandler buildNewClientConnectionHandler(Socket clientSocket) {
+		return handlerFactory.createClientConnectionHandler(clientSocket);
+	}
+	
+	@Override
+	public void close() {
+		closeResource(serverSocket, "Error while closing Server socket");
+		connectionManager.shutdown();
+		closeResource(handlerFactory, "Error while closing connectionHandlerFactory");
+	}
+	
+	private void closeResource(AutoCloseable resource, String msg) {
+		try {
+			resource.close();
+		} catch (Exception e) {
+			LOGGER.error(msg, e);
+		}
 	}
 }

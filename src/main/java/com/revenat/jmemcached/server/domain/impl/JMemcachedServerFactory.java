@@ -5,7 +5,9 @@ import java.util.Properties;
 
 import com.revenat.jmemcached.server.domain.Server;
 import com.revenat.jmemcached.server.domain.ServerConfig;
+import com.revenat.jmemcached.server.domain.ServerContext;
 import com.revenat.jmemcached.server.domain.ServerFactory;
+import com.revenat.jmemcached.server.domain.Storage;
 
 /**
  * Default implementation of the {@link ServerFactory}.
@@ -17,19 +19,28 @@ public class JMemcachedServerFactory implements ServerFactory {
 
 	@Override
 	public Server buildNewServer(Properties overrideServerProperties) {
-		ServerConfig config = new DefaultServerConfig(
-				overrideServerProperties,
-				new DefaultDateTimeProvider(Clock.systemDefaultZone()),
-				new ClassPathResourceLoader());
-		return new DefaultServer(config);
+		
+		
+		return buildServerInstance(overrideServerProperties);
 	}
-
+	
 	@Override
 	public Server buildNewServer() {
+		return buildServerInstance(null);
+	}
+
+	public Server buildServerInstance(Properties overrideServerProperties) {
 		ServerConfig config = new DefaultServerConfig(
-				null,
-				new DefaultDateTimeProvider(Clock.systemDefaultZone()),
+				overrideServerProperties,
 				new ClassPathResourceLoader());
-		return new DefaultServer(config);
+		Storage storage = new DefaultStorage(new DefaultDateTimeProvider(Clock.systemDefaultZone()),
+				config.getClearDataInterval());
+		ServerContext serverContext = new DefaultServerContext(config,
+															   new ServerSocketFactory(),
+															   new ServerConnectionManagerFactory(),
+															   new ClientConnectionHandlerFactory(storage));
+		ServerTask serverTask = new ServerTask(serverContext);
+				
+		return new DefaultServer(serverTask);
 	}
 }

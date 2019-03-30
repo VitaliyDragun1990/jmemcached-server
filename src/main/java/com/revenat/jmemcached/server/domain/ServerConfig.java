@@ -1,8 +1,5 @@
 package com.revenat.jmemcached.server.domain;
 
-import java.net.Socket;
-import java.util.concurrent.ThreadFactory;
-
 /**
  * Component responsible for storing all the server-specific configurations for
  * the server module of the {@code JMemcached} application.
@@ -10,7 +7,7 @@ import java.util.concurrent.ThreadFactory;
  * @author Vitaly Dragun
  *
  */
-public interface ServerConfig extends AutoCloseable {
+public interface ServerConfig {
 
 	/**
 	 * Returns interval in milliseconds which designates how often server should
@@ -18,12 +15,6 @@ public interface ServerConfig extends AutoCloseable {
 	 * 
 	 */
 	int getClearDataInterval();
-
-	/**
-	 * Returns specific {@link ThreadFactory} instance responsible for building new
-	 * instances of the Server's worker {@link Thread}s.
-	 */
-	ThreadFactory getWorkerThreadFactory();
 
 	/**
 	 * Returns port number server is listening on.
@@ -42,13 +33,4 @@ public interface ServerConfig extends AutoCloseable {
 	 * the server at the same time.
 	 */
 	int getMaxThreadCount();
-
-	/**
-	 * Builds new {@link ClientConnectionHandler} instance for handling client's
-	 * {@link Socket} connection
-	 * 
-	 * @param clientSocket {@link Socket} representing client's connection with the
-	 *                     server.
-	 */
-	ClientConnectionHandler buildNewClientConnectionHandler(Socket clientSocket);
 }

@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,16 +17,22 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.revenat.jmemcached.server.domain.impl.ServerTask.ServerShutdownHandler;
-import com.revenat.jmemcached.server.domain.impl.ServerTask.ClientSocketHandler;
+import com.revenat.jmemcached.exception.JMemcachedException;
+import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
+import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerConnectionManager;
+import com.revenat.jmemcached.server.domain.ServerContext;
+import com.revenat.jmemcached.server.domain.exception.ConnectionRejectedException;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ServerTaskTest {
 	
 	@Mock
-	private ClientSocketHandler socketHandler;
+	private ServerConnectionManager connectionManager;
 	@Mock
-	private ServerShutdownHandler shutdownHandler;
+	private Server server;
+	
+	private ServerContextStub serverContext;
 	
 	private ServerSocketStub serverSocketStub;
 	private Socket clientSocketStub;
@@ -38,50 +43,109 @@ public class ServerTaskTest {
 	public void setUp() throws IOException {
 		clientSocketStub = new ClientSocketStub();
 		serverSocketStub = new ServerSocketStub(clientSocketStub);
+		serverContext = new ServerContextStub(serverSocketStub, connectionManager);
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToCreateWithNullServerSocket() throws Exception {
-		serverTask = new ServerTask(null, socketHandler, shutdownHandler);
+	public void shouldNotAllowToCreateWithNullSocketContext() throws Exception {
+		serverTask = new ServerTask(null);
 	}
 	
 	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToCreateWithNullSocketHandler() throws Exception {
-		serverTask = new ServerTask(serverSocketStub, null, shutdownHandler);
+	public void shouldNotAllowToSetNullServer() throws Exception {
+		serverTask = new ServerTask(serverContext);
+		
+		serverTask.setServer(null);
 	}
 	
-	@Test(expected = NullPointerException.class)
-	public void shouldNotAllowToCreateWithNullServerShutdownHandler() throws Exception {
-		serverTask = new ServerTask(serverSocketStub, socketHandler, null);
-	}
-	
-	@Test
-	public void shouldHandleClientSocket() throws Exception {
-		serverTask = new ServerTask(serverSocketStub, socketHandler, shutdownHandler);
+	@Test(expected = JMemcachedException.class)
+	public void shouldNotAllowToStartWithoutServerReference() throws Exception {
+		serverTask = new ServerTask(serverContext);
 		
-		serverTask.handleClientSocket(clientSocketStub);
-		
-		verify(socketHandler, times(1)).handle(clientSocketStub);
+		serverTask.run();
 	}
 	
 	@Test
-	public void shouldCloseClientSocketIfConnectionHasBeenRejectedByServer() throws Exception {
-		serverTask = new ServerTask(serverSocketStub, socketHandler, shutdownHandler);
-		doThrow(RejectedExecutionException.class).when(socketHandler).handle(any(Socket.class));
+	public void shouldHandleClientConnection() throws Exception {
+		serverTask = new ServerTask(serverContext);
+		serverTask.setServer(server);
+		serverSocketStub.throwExceptionOnAttempt(2); // to interrupt task, and make it handle only one client
 		
-		serverTask.handleClientSocket(clientSocketStub);
+		serverTask.run();
+		
+		verify(connectionManager, times(1)).submit(any(ClientConnectionHandler.class));
+	}
+	
+	@Test
+	public void shouldCloseClientSocketIfConnectionHasBeenRejectedByConnectionManager() throws Exception {
+		serverTask = new ServerTask(serverContext);
+		serverTask.setServer(server);
+		serverSocketStub.throwExceptionOnAttempt(2); // to interrupt task, and make it handle only one client
+		doThrow(ConnectionRejectedException.class).when(connectionManager).submit(any(ClientConnectionHandler.class));
+		
+		serverTask.run();
 		
 		assertTrue("Client socket should be closed", clientSocketStub.isClosed());
 	}
 	
 	@Test
-	public void shouldShutdownServerIfErrorHappendDuringEstablishingConnectionWithClient() throws Exception {
-		serverTask = new ServerTask(serverSocketStub, socketHandler, shutdownHandler);
-		serverSocketStub.throwExceptionOnAttempt(2);
+	public void shouldStopServerIfIOExceptionWhileAcceptingClientSocket() throws Exception {
+		serverTask = new ServerTask(serverContext);
+		serverTask.setServer(server);
+		serverSocketStub.throwExceptionOnAttempt(1); // make serverSocket to throw IOException of first accept attempt
 		
 		serverTask.run();
 		
-		verify(shutdownHandler, times(1)).shutdownServer();
+		verify(server, times(1)).stop();
+	}
+	
+	@Test
+	public void shouldCloseServerContextWhenTheTaskIsDone() throws Exception {
+		serverTask = new ServerTask(serverContext);
+		serverTask.setServer(server);
+		serverSocketStub.throwExceptionOnAttempt(2); // to interrupt task, and make it handle only one client
+		
+		serverTask.run();
+		serverTask.shutdown();
+		
+		assertTrue("ServerContext should be closed", serverContext.isClosed());
+	}
+	
+	private static class ServerContextStub implements ServerContext {
+		private boolean isClosed = false;
+		private ServerSocket serverSocket;
+		private ServerConnectionManager connectionManager;
+		private ClientConnectionHandler connectionHandler;
+
+		ServerContextStub(ServerSocket serverSocket, ServerConnectionManager connectionManager) {
+			this.serverSocket = serverSocket;
+			this.connectionManager = connectionManager;
+			this.connectionHandler = () -> {};
+		}
+
+		@Override
+		public ServerSocket getServerSocket() {
+			return serverSocket;
+		}
+
+		@Override
+		public ServerConnectionManager getServerConnectionManager() {
+			return connectionManager;
+		}
+
+		@Override
+		public ClientConnectionHandler buildNewClientConnectionHandler(Socket clientSocket) {
+			return connectionHandler;
+		}
+
+		@Override
+		public void close() {
+			this.isClosed = true;
+		}
+		
+		public boolean isClosed() {
+			return isClosed;
+		}
 	}
 	
 	private static class ClientSocketStub extends Socket {
@@ -94,43 +158,6 @@ public class ServerTaskTest {
 
 		@Override
 		public synchronized void close() throws IOException {
-			this.isClosed = true;
-		}
-
-		@Override
-		public boolean isClosed() {
-			return isClosed;
-		}
-	}
-	
-	private static class ServerSocketStub extends ServerSocket {
-		private Socket clientSocket;
-		private boolean isClosed;
-		private int attemptCount;
-		private int attemptWhenException = -1;
-
-		public ServerSocketStub(Socket clientSocket) throws IOException {
-			super();
-			this.clientSocket = clientSocket;
-			this.isClosed = false;
-			this.attemptCount = 0;
-		}
-
-		public void throwExceptionOnAttempt(int attemptNumber) {
-			this.attemptWhenException = attemptNumber;
-		}
-
-		@Override
-		public Socket accept() throws IOException {
-			attemptCount++;
-			if (attemptCount == attemptWhenException) {
-				throw new IOException("Error during establishing connection with client socket.");
-			}
-			return clientSocket;
-		}
-
-		@Override
-		public void close() throws IOException {
 			this.isClosed = true;
 		}
 

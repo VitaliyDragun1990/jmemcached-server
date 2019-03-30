@@ -6,16 +6,24 @@ import java.io.OutputStream;
 
 import com.revenat.jmemcached.protocol.model.Response;
 
+/**
+ * This interface represents component responsible for reading client's
+ * {@link Request} from {@link InputStream}, processing that request, creating
+ * appropriate {@link Response} object and sending it back to client via
+ * {@link OutputStream}.
+ * 
+ * @author Vitaly Dragun
+ *
+ */
 public interface RequestProcessor {
 
 	/**
-	 * Reads client's {@link Request} from provided {@link InputStream}, creates
-	 * appropriate {@link Response} and writes it back to client via provided
-	 * {@link OutputStream}.
+	 * Reads client's {@link Request}, processes it, creates appropriate
+	 * {@link Response} and sends it back to client via {@link OutputStream}.
 	 * 
 	 * @param clientInput  {@link InputStream} to read {@link Request} from.
 	 * @param clientOutput {@link OutputStream} to write {@link Response} to.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	void process(InputStream clientInput, OutputStream clientOutput) throws IOException;
 }
