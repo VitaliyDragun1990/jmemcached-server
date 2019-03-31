@@ -4,7 +4,7 @@ import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.protocol.model.Request;
 import com.revenat.jmemcached.protocol.model.Response;
 import com.revenat.jmemcached.server.domain.CommandHandler;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
  * This implementation of {@link CommandHandler} interface should be last in chain
@@ -15,7 +15,7 @@ import com.revenat.jmemcached.server.domain.Storage;
  */
 class UnsupportedCommandHandler extends AbstractCommandHandler {
 
-	UnsupportedCommandHandler(Storage storage) {
+	UnsupportedCommandHandler(ServerStorage storage) {
 		super(storage);
 	}
 

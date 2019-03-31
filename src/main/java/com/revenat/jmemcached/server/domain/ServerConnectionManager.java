@@ -10,21 +10,23 @@ package com.revenat.jmemcached.server.domain;
 public interface ServerConnectionManager {
 
 	/**
-	 * Submits new {@link ClientConnectionHandler} instance and thus tries to
-	 * establish new connection between server and its client.
+	 * Tries to establish new connection between server and its client, using provided
+	 * {@link ClientConnectionHandler} {@code connectionHandler} parameter to
+	 * handle it.
 	 * 
-	 * @param connectionHandler {@link ClientConnectionHandler} instance responsible for handling
-	 *             new connection between server and its client.
+	 * @param connectionHandler {@link ClientConnectionHandler} instance responsible
+	 *                          for handling new connection between server and its
+	 *                          client.
 	 * @throws ConnectionRejectedException if new connection can not be established
 	 *                                     due the fact that server might reached
 	 *                                     it's capacity limit for total
 	 *                                     simultaneously opened connections.
 	 */
-	void submit(ClientConnectionHandler connectionHandler);
+	void establishConnection(ClientConnectionHandler connectionHandler);
 
 	/**
-	 * Shutdowns current instance of the {@link ServerConnectionManager}, thus trying to
-	 * close all currently active connections.
+	 * Shutdowns current instance of the {@link ServerConnectionManager}, thus
+	 * closing all currently active connections.
 	 */
 	void shutdown();
 }

@@ -8,7 +8,7 @@ import com.revenat.jmemcached.protocol.model.Status;
  * @author Vitaly Dragun
  *
  */
-public interface Storage extends AutoCloseable {
+public interface ServerStorage extends AutoCloseable {
 
 	/**
 	 * Adds data into this storage using specified {@code key} and {@code ttl}

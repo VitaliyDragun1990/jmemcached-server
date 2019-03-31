@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.revenat.jmemcached.exception.JMemcachedException;
+import com.revenat.jmemcached.server.domain.ServerConfig;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultServerTest {
@@ -23,25 +25,32 @@ public class DefaultServerTest {
 	
 	@Mock
 	private ServerTask serverTask;
+	private ServerConfig serverConfigStub = new ServerConfigStub();
 	
 	private DefaultServer server;
+	
+	@Before
+	public void setUp() {
+		server = new DefaultServer(serverTask, serverConfigStub);
+	}
 
 	@Test(expected = NullPointerException.class)
 	public void shouldNotAllowToCreateWithNullServerTask() throws Exception {
-		server = new DefaultServer(null);
+		server = new DefaultServer(null, serverConfigStub);
+	}
+	
+	@Test(expected = NullPointerException.class)
+	public void shouldNotAllowToCreateWithNullServerConfig() throws Exception {
+		server = new DefaultServer(serverTask, null);
 	}
 	
 	@Test
 	public void shouldAddItselfToServerTaskWhenCreated() throws Exception {
-		server = new DefaultServer(serverTask);
-		
 		verify(serverTask, times(1)).setServer(server);
 	}
 	
 	@Test
 	public void shouldStartServerTaskWhenStarted() throws Exception {
-		server = new DefaultServer(serverTask);
-		
 		server.start();
 		TimeUnit.MILLISECONDS.sleep(200);
 		
@@ -50,7 +59,6 @@ public class DefaultServerTest {
 	
 	@Test
 	public void shouldNowAllowToStartSameInstanceSeveralTimes() throws Exception {
-		server = new DefaultServer(serverTask);
 		expected.expect(JMemcachedException.class);
 		expected.expectMessage(containsString("Current server instance has been already started or stopped!"));
 		
@@ -60,11 +68,31 @@ public class DefaultServerTest {
 
 	@Test
 	public void shouldShutdownServerTaskWhenStopped() throws Exception {
-		server = new DefaultServer(serverTask);
-		
 		server.start();
 		server.stop();
 		
 		verify(serverTask, times(1)).shutdown();
+	}
+	
+	private static class ServerConfigStub implements ServerConfig {
+		@Override
+		public int getClearDataInterval() {
+			return 0;
+		}
+
+		@Override
+		public int getServerPort() {
+			return 0;
+		}
+
+		@Override
+		public int getInitThreadCount() {
+			return 0;
+		}
+
+		@Override
+		public int getMaxThreadCount() {
+			return 0;
+		}
 	}
 }

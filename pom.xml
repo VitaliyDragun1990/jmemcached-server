@@ -16,6 +16,7 @@
 		<hamcrest.version>2.1</hamcrest.version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<logback.version>1.2.3</logback.version>
+		<commong-lang3.version>3.8.1</commong-lang3.version>
 	</properties>
 
 	<dependencies>
@@ -54,6 +55,12 @@
 			<version>${hamcrest.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commong-lang3.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -64,7 +71,8 @@
 				<version>${jacoco.version}</version>
 				<configuration>
 					<excludes>
-						<exclude>**/Constants.*</exclude>
+						<exclude>**/CLI.*</exclude>
+						<exclude>**/ServiceWrapper.*</exclude>
 					</excludes>
 				</configuration>
 				<executions>
@@ -94,7 +102,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.9</minimum>
+											<minimum>0.85</minimum>
 										</limit>
 									</limits>
 								</rule>

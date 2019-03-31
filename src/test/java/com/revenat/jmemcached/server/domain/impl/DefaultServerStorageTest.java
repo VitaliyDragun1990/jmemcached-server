@@ -16,18 +16,18 @@ import com.revenat.jmemcached.protocol.model.Status;
 import com.revenat.jmemcached.server.domain.DateTimeProvider;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class DefaultStorageTest {
+public class DefaultServerStorageTest {
 	private static final byte[] ANY_DATA = new byte[] {1, 2, 3};
 	private static final int CLEAR_DATA_INTERVAL_MILLIS = 1000;
 
 	@Mock
 	private DateTimeProvider dateTimeProvider;
 	
-	private DefaultStorage storage;
+	private DefaultServerStorage storage;
 	
 	@Before
 	public void setUp() {
-		storage = new DefaultStorage(dateTimeProvider, CLEAR_DATA_INTERVAL_MILLIS);
+		storage = new DefaultServerStorage(dateTimeProvider, CLEAR_DATA_INTERVAL_MILLIS);
 	}
 	
 	@Test(expected = NullPointerException.class)

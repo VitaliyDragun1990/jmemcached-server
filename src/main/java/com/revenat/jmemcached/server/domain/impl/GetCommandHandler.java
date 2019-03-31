@@ -4,7 +4,7 @@ import com.revenat.jmemcached.protocol.model.Command;
 import com.revenat.jmemcached.protocol.model.Request;
 import com.revenat.jmemcached.protocol.model.Response;
 import com.revenat.jmemcached.protocol.model.Status;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
  * This implementation of the {@link CommandHandler} interface responsible for
@@ -15,7 +15,7 @@ import com.revenat.jmemcached.server.domain.Storage;
  */
 class GetCommandHandler extends AbstractCommandHandler {
 
-	GetCommandHandler(Storage storage) {
+	GetCommandHandler(ServerStorage storage) {
 		super(storage);
 	}
 

@@ -12,10 +12,6 @@ import com.revenat.jmemcached.exception.JMemcachedException;
 public class ConnectionRejectedException extends JMemcachedException {
 	private static final long serialVersionUID = -6792889694539346876L;
 
-	public ConnectionRejectedException(String message) {
-		super(message);
-	}
-
 	public ConnectionRejectedException(String message, Throwable cause) {
 		super(message, cause);
 	}

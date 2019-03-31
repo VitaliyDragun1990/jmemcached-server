@@ -53,19 +53,19 @@ public class DefaultServerConnectionManagerTest {
 	}
 
 	@Test
-	public void shouldAllowToSubmitNewClientConnection() throws Exception {
-		TestConnectionHandler connectionHandler = new TestConnectionHandler();
+	public void shouldAllowToEstablishNewConnection() throws Exception {
+		ClientConnectionHandlerStub connectionHandler = new ClientConnectionHandlerStub();
 		assertFalse("Should not be handled before submitting", connectionHandler.isHandled());
 
 		submitNewConnection(connectionHandler, 1);
 		TimeUnit.MILLISECONDS.sleep(600);
 
-		assertTrue("Should be handled in new connection", connectionHandler.isHandled());
+		assertTrue("Should be handled in a new connection", connectionHandler.isHandled());
 	}
 
 	@Test(expected = ConnectionRejectedException.class)
-	public void shouldNotAllowToSubmitNewConnectionIfNoFreeWrokerThreadAvailable() throws Exception {
-		submitNewConnection(new TestConnectionHandler(), 3);
+	public void shouldNotAllowToEstablishNewConnectionIfNoFreeWrokerThreadAvailable() throws Exception {
+		submitNewConnection(new ClientConnectionHandlerStub(), 3);
 	}
 
 	@Test
@@ -77,11 +77,11 @@ public class DefaultServerConnectionManagerTest {
 
 	private void submitNewConnection(ClientConnectionHandler connectionHandler, int times) {
 		for (int i = 0; i < times; i++) {
-			manager.submit(connectionHandler);
+			manager.establishConnection(connectionHandler);
 		}
 	}
 
-	private static class TestConnectionHandler implements ClientConnectionHandler {
+	private static class ClientConnectionHandlerStub implements ClientConnectionHandler {
 		private boolean isHandled = false;
 
 		@Override

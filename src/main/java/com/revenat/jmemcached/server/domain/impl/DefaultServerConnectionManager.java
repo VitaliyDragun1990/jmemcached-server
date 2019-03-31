@@ -24,11 +24,11 @@ class DefaultServerConnectionManager implements ServerConnectionManager {
 	}
 
 	@Override
-	public void submit(ClientConnectionHandler connectionHandler) {
+	public void establishConnection(ClientConnectionHandler connectionHandler) {
 		try {
 			threadPool.submit(connectionHandler);
 		} catch (RejectedExecutionException e) {
-			throw new ConnectionRejectedException("All worker threads are busy: new connection attempt has been rejected.", e);
+			throw new ConnectionRejectedException("All connection slots are occupied: new connection attempt has been rejected.", e);
 		}
 	}
 

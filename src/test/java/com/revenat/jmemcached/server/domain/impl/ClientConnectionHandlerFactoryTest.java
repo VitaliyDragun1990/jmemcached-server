@@ -15,13 +15,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ClientConnectionHandlerFactoryTest {
 
 	@Mock
-	private Storage storage;
+	private ServerStorage storage;
 	
 	private ClientConnectionHandlerFactory factory;
 	

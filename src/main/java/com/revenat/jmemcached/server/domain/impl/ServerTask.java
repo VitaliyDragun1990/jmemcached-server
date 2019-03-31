@@ -71,7 +71,7 @@ class ServerTask implements Runnable {
 	private void handleClientSocket(Socket clientSocket) throws IOException {
 		ServerConnectionManager connectionManager = serverContext.getServerConnectionManager();
 		try {
-			connectionManager.submit(serverContext.buildNewClientConnectionHandler(clientSocket));
+			connectionManager.establishConnection(serverContext.buildNewClientConnectionHandler(clientSocket));
 			LOGGER.info("A new client connection has been established: {}", clientSocket.getRemoteSocketAddress());
 		} catch (JMemcachedException e) {
 			LOGGER.error(e.getMessage());

@@ -14,7 +14,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.revenat.jmemcached.protocol.model.Request;
 import com.revenat.jmemcached.protocol.model.Response;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class AbstractCommandHandlerTest {
@@ -22,7 +22,7 @@ public class AbstractCommandHandlerTest {
 	@Mock
 	private AbstractCommandHandler nextInChain;
 	@Mock
-	private Storage storage;
+	private ServerStorage storage;
 	
 	private AbstractCommandHandler handler;
 	
@@ -58,7 +58,7 @@ public class AbstractCommandHandlerTest {
 	}
 
 	public static class TestCommandHandler extends AbstractCommandHandler {
-		TestCommandHandler(Storage storage) {
+		TestCommandHandler(ServerStorage storage) {
 			super(storage);
 		}
 		@Override

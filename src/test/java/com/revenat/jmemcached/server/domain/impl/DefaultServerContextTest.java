@@ -140,7 +140,7 @@ public class DefaultServerContextTest {
 		private boolean isClosed = false;
 		
 		@Override
-		public void submit(ClientConnectionHandler connectionHandler) {
+		public void establishConnection(ClientConnectionHandler connectionHandler) {
 		}
 
 		@Override

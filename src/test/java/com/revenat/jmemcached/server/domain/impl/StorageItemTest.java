@@ -1,7 +1,6 @@
 package com.revenat.jmemcached.server.domain.impl;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.revenat.jmemcached.server.domain.DateTimeProvider;
-import com.revenat.jmemcached.server.domain.impl.DefaultStorage.StorageItem;
+import com.revenat.jmemcached.server.domain.impl.DefaultServerStorage.StorageItem;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class StorageItemTest {
@@ -35,15 +34,6 @@ public class StorageItemTest {
 	public void setUp() {
 		when(dateTimeProvider.getCurrentTimeInMillis()).thenReturn(CURRENT_TIME_IN_MILLIS);
 		when(dateTimeProvider.getDateTimeFrom(anyLong())).thenReturn(DATE_TIME);
-	}
-
-	@Test
-	public void shouldReturnCopyOfTheData() throws Exception {
-		storageItem = new StorageItem(ANY_KEY, null, ANY_DATA, dateTimeProvider);
-		byte[] copy = storageItem.getData();
-		copy[0] = 100;
-
-		assertArrayEquals(ANY_DATA, storageItem.getData());
 	}
 
 	@Test

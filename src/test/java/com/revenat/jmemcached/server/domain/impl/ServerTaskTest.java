@@ -73,7 +73,7 @@ public class ServerTaskTest {
 		
 		serverTask.run();
 		
-		verify(connectionManager, times(1)).submit(any(ClientConnectionHandler.class));
+		verify(connectionManager, times(1)).establishConnection(any(ClientConnectionHandler.class));
 	}
 	
 	@Test
@@ -81,7 +81,7 @@ public class ServerTaskTest {
 		serverTask = new ServerTask(serverContext);
 		serverTask.setServer(server);
 		serverSocketStub.throwExceptionOnAttempt(2); // to interrupt task, and make it handle only one client
-		doThrow(ConnectionRejectedException.class).when(connectionManager).submit(any(ClientConnectionHandler.class));
+		doThrow(ConnectionRejectedException.class).when(connectionManager).establishConnection(any(ClientConnectionHandler.class));
 		
 		serverTask.run();
 		

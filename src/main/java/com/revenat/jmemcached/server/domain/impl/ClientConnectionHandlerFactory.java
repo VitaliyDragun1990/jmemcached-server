@@ -12,7 +12,7 @@ import com.revenat.jmemcached.protocol.impl.ResponseConverter;
 import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.CommandHandler;
 import com.revenat.jmemcached.server.domain.RequestProcessor;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
  * Factory class responsible for building new instances of the
@@ -25,7 +25,7 @@ import com.revenat.jmemcached.server.domain.Storage;
  *
  */
 class ClientConnectionHandlerFactory implements AutoCloseable {
-	private final Storage storage;
+	private final ServerStorage storage;
 	private final RequestReader requestReader;
 	private final ResponseWriter responseWriter;
 	private final CommandHandler commandHandler;
@@ -33,7 +33,7 @@ class ClientConnectionHandlerFactory implements AutoCloseable {
 	
 	private boolean isClosed;
 
-	ClientConnectionHandlerFactory(Storage storage) {
+	ClientConnectionHandlerFactory(ServerStorage storage) {
 		this.storage = requireNonNull(storage);
 		this.isClosed = false;
 		this.requestReader = new RequestConverter();
@@ -42,7 +42,7 @@ class ClientConnectionHandlerFactory implements AutoCloseable {
 		this.requestProcessor = new DefaultRequestProcessor(requestReader, responseWriter, commandHandler);
 	}
 
-	private CommandHandler buildHandlersChain(Storage stor) {
+	private CommandHandler buildHandlersChain(ServerStorage stor) {
 		AbstractCommandHandler handler = new GetCommandHandler(stor);
 
 		handler.add(new PutCommandHandler(stor));

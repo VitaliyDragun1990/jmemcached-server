@@ -7,7 +7,7 @@ import com.revenat.jmemcached.server.domain.Server;
 import com.revenat.jmemcached.server.domain.ServerConfig;
 import com.revenat.jmemcached.server.domain.ServerContext;
 import com.revenat.jmemcached.server.domain.ServerFactory;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
  * Default implementation of the {@link ServerFactory}.
@@ -33,7 +33,7 @@ public class JMemcachedServerFactory implements ServerFactory {
 		ServerConfig config = new DefaultServerConfig(
 				overrideServerProperties,
 				new ClassPathResourceLoader());
-		Storage storage = new DefaultStorage(new DefaultDateTimeProvider(Clock.systemDefaultZone()),
+		ServerStorage storage = new DefaultServerStorage(new DefaultDateTimeProvider(Clock.systemDefaultZone()),
 				config.getClearDataInterval());
 		ServerContext serverContext = new DefaultServerContext(config,
 															   new ServerSocketFactory(),
@@ -41,6 +41,6 @@ public class JMemcachedServerFactory implements ServerFactory {
 															   new ClientConnectionHandlerFactory(storage));
 		ServerTask serverTask = new ServerTask(serverContext);
 				
-		return new DefaultServer(serverTask);
+		return new DefaultServer(serverTask, config);
 	}
 }

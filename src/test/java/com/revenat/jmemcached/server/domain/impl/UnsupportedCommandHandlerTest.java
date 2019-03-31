@@ -12,7 +12,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.protocol.model.Command;
 import com.revenat.jmemcached.protocol.model.Request;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class UnsupportedCommandHandlerTest {
@@ -21,7 +21,7 @@ public class UnsupportedCommandHandlerTest {
 	public ExpectedException expected = ExpectedException.none();
 	
 	@Mock
-	private Storage storage;
+	private ServerStorage storage;
 	
 	@Test
 	public void shouldThrowExceptionWhenHandleAnyRequest() throws Exception {

@@ -17,13 +17,13 @@ import com.revenat.jmemcached.protocol.model.Command;
 import com.revenat.jmemcached.protocol.model.Request;
 import com.revenat.jmemcached.protocol.model.Response;
 import com.revenat.jmemcached.protocol.model.Status;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ClearCommandHandlerTest {
 	
 	@Mock
-	private Storage storage;
+	private ServerStorage storage;
 	@Mock
 	private AbstractCommandHandler nextInChain;
 	

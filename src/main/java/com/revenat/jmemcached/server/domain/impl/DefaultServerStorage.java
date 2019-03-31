@@ -2,7 +2,7 @@ package com.revenat.jmemcached.server.domain.impl;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -15,35 +15,29 @@ import org.slf4j.LoggerFactory;
 
 import com.revenat.jmemcached.protocol.model.Status;
 import com.revenat.jmemcached.server.domain.DateTimeProvider;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
- * Default implementation of the {@link Storage} interface which periodically
+ * Default implementation of the {@link ServerStorage} interface which periodically
  * checks for expired items in the store and deletes the found ones.
  * 
  * @author Vitaly Dragun
  *
  */
-class DefaultStorage implements Storage {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStorage.class);
-	private static final String CLEAR_THREAD_NAME = "clearExpiredDataJobThread";
+class DefaultServerStorage implements ServerStorage {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultServerStorage.class);
+	private static final String CLEAR_THREAD_NAME = "expiredDataCleanerThread";
 	private static final String KEY_CAN_NOT_BE_NULL = "key can not be null";
 
-	private final Map<String, StorageItem> storage;
+	private final InnerStorage storage;
 	private final ExecutorService executorService;
-	private final Runnable clearExpiredDataJob;
-	private final DateTimeProvider dateTimeProvider;
+	private final ExpiredDataCleaner expiredDataCleaner;
 
-	DefaultStorage(DateTimeProvider dateTimeProvider, int clearDataInterval) {
-		this.storage = createStorage();
+	DefaultServerStorage(DateTimeProvider dateTimeProvider, int clearDataInterval) {
+		this.storage = new InnerStorage(dateTimeProvider);
 		this.executorService = createClearExpiredDataExecutorService();
-		this.clearExpiredDataJob = createClearExpiredDataJob(clearDataInterval);
-		this.executorService.submit(clearExpiredDataJob);
-		this.dateTimeProvider = dateTimeProvider;
-	}
-
-	private Map<String, StorageItem> createStorage() {
-		return new ConcurrentHashMap<>();
+		this.expiredDataCleaner = new ExpiredDataCleaner(storage, clearDataInterval);
+		this.executorService.submit(expiredDataCleaner);
 	}
 
 	private ExecutorService createClearExpiredDataExecutorService() {
@@ -59,10 +53,6 @@ class DefaultStorage implements Storage {
 		};
 	}
 
-	private Runnable createClearExpiredDataJob(int clearDataIntervalMillis) {
-		return new ClearExpiredDataJob(storage, clearDataIntervalMillis);
-	}
-
 	@Override
 	public Status put(String key, long ttl, byte[] data) {
 		return putInStorage(key, ttl, data);
@@ -73,8 +63,8 @@ class DefaultStorage implements Storage {
 		requireNonNull(data, "data can not be null");
 		requireNotEmpty(data);
 
-		StorageItem oldItem = storage.put(key, new StorageItem(key, ttl, data, dateTimeProvider));
-		Status status = oldItem == null ? Status.ADDED : Status.REPLACED;
+		byte[] oldData = storage.put(key, ttl, data);
+		Status status = oldData == null ? Status.ADDED : Status.REPLACED;
 		LOGGER.debug("Data with key {} was {} in storage", key, status);
 		return status;
 	}
@@ -94,21 +84,21 @@ class DefaultStorage implements Storage {
 	public byte[] get(String key) {
 		requireNonNull(key, KEY_CAN_NOT_BE_NULL);
 
-		StorageItem item = storage.get(key);
-		if (item == null || item.isExpired()) {
+		byte[] data = storage.get(key);
+		if (data == null) {
 			LOGGER.debug("Data with key {} was not found in storage", key);
 			return new byte[0];
 		}
 		LOGGER.debug("Data with key {} was retrieved from storage", key);
-		return item.getData();
+		return data;
 	}
 
 	@Override
 	public Status remove(String key) {
 		requireNonNull(key, KEY_CAN_NOT_BE_NULL);
 
-		StorageItem item = storage.remove(key);
-		Status status = item != null && !item.isExpired() ? Status.REMOVED : Status.NOT_FOUND;
+		byte[] data =  storage.remove(key);
+		Status status = data != null ? Status.REMOVED : Status.NOT_FOUND;
 		LOGGER.debug("Data with key {} was {} in/from storage", key, status);
 		return status;
 	}
@@ -122,11 +112,53 @@ class DefaultStorage implements Storage {
 
 	@Override
 	public void close() throws Exception {
-		// DO nothing. Daemon threads destroy automatically.
+		executorService.shutdown();
+	}
+	
+	/**
+	 * This inner class represents in-memory storage for server clients data
+	 * and fully supports concurrent modification operations, which is essential
+	 * in case of the server multithreading nature.
+	 * 
+	 * @author Vitaly Dragun
+	 *
+	 */
+	static class InnerStorage implements Iterable<StorageItem>{
+		private Map<String, StorageItem> items = new ConcurrentHashMap<>();
+		private final DateTimeProvider dateTimeProvider;
+		
+		InnerStorage(DateTimeProvider dateTimeProvider) {
+			this.dateTimeProvider = dateTimeProvider;
+		}
+		
+		byte[] put(String key, Long ttl, byte[] data) {
+			StorageItem item = new StorageItem(key, ttl, data, dateTimeProvider);
+			StorageItem oldItem = items.put(key, item);
+			return oldItem != null ? oldItem.data : null;
+		}
+		
+		byte[] get(String key) {
+			StorageItem item = items.get(key);
+			return (item != null && !item.isExpired()) ? item.data : null;
+		}
+		
+		byte[] remove(String key) {
+			StorageItem item = items.remove(key);
+			return item != null ? item.data : null;
+		}
+		
+		void clear() {
+			items.clear();
+		}
+
+		@Override
+		public Iterator<StorageItem> iterator() {
+			return items.values().iterator();
+		}
 	}
 
 	/**
-	 * This inner class is a {@link DefaultStorage} specific component which
+	 * This inner class is a {@link DefaultServerStorage} specific component which
 	 * represents single item in the store.
 	 * 
 	 * @author Vitaly Dragun
@@ -135,7 +167,7 @@ class DefaultStorage implements Storage {
 	static class StorageItem {
 		final String key;
 		final Long ttl;
-		private final byte[] data;
+		final byte[] data;
 		private final DateTimeProvider dateTimeProvider;
 
 		StorageItem(String key, Long ttl, byte[] data, DateTimeProvider dateTimeProvider) {
@@ -149,10 +181,6 @@ class DefaultStorage implements Storage {
 			return ttl != null && ttl.longValue() < dateTimeProvider.getCurrentTimeInMillis();
 		}
 
-		public byte[] getData() {
-			return Arrays.copyOf(data, data.length);
-		}
-
 		@Override
 		public String toString() {
 			String s = String.format("[%s]=%d bytes", key, data.length);
@@ -164,20 +192,20 @@ class DefaultStorage implements Storage {
 	}
 
 	/**
-	 * This inner class is strictly specific to {@link DefaultStorage} and
-	 * represents a clearing job that should be done in a separate thread and is
-	 * aimed to clear expired {@link StorageItem}s from the store.
+	 * This inner class is strictly specific to {@link DefaultServerStorage} and
+	 * represents a cleaning task that should be done in a separate thread and is
+	 * aimed to clean expired {@link StorageItem}s from the store.
 	 * 
 	 * @author Vitaly Dragun
 	 *
 	 */
-	static class ClearExpiredDataJob implements Runnable {
-		private static final Logger LOGGER = LoggerFactory.getLogger(ClearExpiredDataJob.class);
+	static class ExpiredDataCleaner implements Runnable {
+		private static final Logger LOGGER = LoggerFactory.getLogger(ExpiredDataCleaner.class);
 
-		private final Map<String, StorageItem> storage;
+		private final InnerStorage storage;
 		private final int clearDataIntervalMillis;
 
-		ClearExpiredDataJob(Map<String, StorageItem> storage, int clearDataIntervalMillis) {
+		ExpiredDataCleaner(InnerStorage storage, int clearDataIntervalMillis) {
 			this.storage = storage;
 			this.clearDataIntervalMillis = clearDataIntervalMillis;
 		}
@@ -186,7 +214,7 @@ class DefaultStorage implements Storage {
 		public void run() {
 			LOGGER.debug("{} started with interval {} millis", Thread.currentThread().getName(),
 					clearDataIntervalMillis);
-			while (isShouldContinue()) {
+			while (notInterrupted()) {
 				LOGGER.trace("Invoke clearing job");
 				clearExpiredItems();
 				try {
@@ -197,21 +225,21 @@ class DefaultStorage implements Storage {
 			}
 		}
 
-		private boolean isShouldContinue() {
+		private boolean notInterrupted() {
 			return !Thread.interrupted();
+		}
+		
+		void clearExpiredItems() {
+			for (StorageItem item : storage) {
+				if (item.isExpired()) {
+					storage.remove(item.key);
+					LOGGER.debug("Removed expired StorageItem={}", item);
+				}
+			}
 		}
 
 		private void sleepUntilNextCheck() throws InterruptedException {
 			TimeUnit.MILLISECONDS.sleep(clearDataIntervalMillis);
-		}
-
-		void clearExpiredItems() {
-			for (Map.Entry<String, StorageItem> entry : storage.entrySet()) {
-				if (entry.getValue().isExpired()) {
-					StorageItem item = storage.remove(entry.getKey());
-					LOGGER.debug("Removed expired StorageItem={}", item);
-				}
-			}
 		}
 	}
 }

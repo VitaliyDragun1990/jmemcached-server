@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.server.domain.Server;
+import com.revenat.jmemcached.server.domain.ServerConfig;
 
 /**
  * Default implementation of the {@link Server} interface.
@@ -17,12 +18,14 @@ import com.revenat.jmemcached.server.domain.Server;
 class DefaultServer implements Server {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultServer.class);
 	
+	private final ServerConfig serverConfig;
 	private final ServerTask serverTask;
 	private final Thread mainServerThread;
 	private volatile boolean serverStopped;
 	
-	DefaultServer(ServerTask serverTask) {
+	DefaultServer(ServerTask serverTask, ServerConfig serverConfig) {
 		this.serverTask = requireNonNull(serverTask, "serverTask can not be null");
+		this.serverConfig = requireNonNull(serverConfig, "serverConfig can not be null");
 		this.serverTask.setServer(this);
 		this.mainServerThread = createMainServerThread(serverTask);
 	}
@@ -43,7 +46,7 @@ class DefaultServer implements Server {
 		}
 		Runtime.getRuntime().addShutdownHook(getShutdownHook());
 		mainServerThread.start();
-		LOGGER.info("Server started.");
+		LOGGER.info("Server started: {}", serverConfig);
 	}
 	
 	private Thread getShutdownHook() {

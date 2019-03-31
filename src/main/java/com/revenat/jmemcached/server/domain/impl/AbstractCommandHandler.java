@@ -3,7 +3,7 @@ package com.revenat.jmemcached.server.domain.impl;
 import static java.util.Objects.requireNonNull;
 
 import com.revenat.jmemcached.server.domain.CommandHandler;
-import com.revenat.jmemcached.server.domain.Storage;
+import com.revenat.jmemcached.server.domain.ServerStorage;
 
 /**
  * Parent class for all {@link CommandHandler} implementations
@@ -12,10 +12,10 @@ import com.revenat.jmemcached.server.domain.Storage;
  *
  */
 abstract class AbstractCommandHandler implements CommandHandler {
-	private final Storage storage;
+	private final ServerStorage storage;
 	private AbstractCommandHandler nextInChain;
 	
-	AbstractCommandHandler(Storage storage) {
+	AbstractCommandHandler(ServerStorage storage) {
 		this.storage = requireNonNull(storage, "Storage can not be null");
 	}
 
@@ -30,7 +30,7 @@ abstract class AbstractCommandHandler implements CommandHandler {
 		}
 	}
 	
-	final Storage getStorage() {
+	final ServerStorage getStorage() {
 		return this.storage;
 	}
 	
