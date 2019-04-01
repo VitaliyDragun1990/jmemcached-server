@@ -11,7 +11,6 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<junit.version>4.12</junit.version>
-		<assertj.version>3.9.0</assertj.version>
 		<mockito.version>2.13.0</mockito.version>
 		<hamcrest.version>2.1</hamcrest.version>
 		<jacoco.version>0.8.2</jacoco.version>
@@ -38,12 +37,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>${assertj.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>${mockito.version}</version>
@@ -64,7 +57,30 @@
 	</dependencies>
 
 	<build>
-		<plugins>
+	<plugins>
+		<plugin>
+			<artifactId>maven-assembly-plugin</artifactId>
+			<executions>
+				<execution>
+					<phase>package</phase>
+					<goals>
+						<goal>attached</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<appendAssemblyId>false</appendAssemblyId>
+				<descriptorRefs>
+					<descriptorRef>jar-with-dependencies</descriptorRef>
+				</descriptorRefs>
+				<finalName>jmemcached-server-production-${version}</finalName>
+				<archive>
+					<manifest>
+						<mainClass>com.revenat.jmemcached.server.CLI</mainClass>
+					</manifest>
+				</archive>
+			</configuration>
+		</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>

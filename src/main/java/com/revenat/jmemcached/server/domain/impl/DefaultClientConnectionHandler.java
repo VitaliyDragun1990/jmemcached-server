@@ -12,6 +12,7 @@ import java.net.SocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.RequestProcessor;
 
@@ -48,7 +49,10 @@ class DefaultClientConnectionHandler implements ClientConnectionHandler {
 			if (!clientSocket.isClosed()) {
 				LOGGER.error("IO Error: " + e.getMessage(), e);
 			}
-		} finally {
+		} catch (JMemcachedException e) {
+			LOGGER.error(e.getMessage(), e);
+		}
+		finally {
 			closeClientSocket();
 		}
 	}

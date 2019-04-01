@@ -1,2 +1,2 @@
-# jmemcached-common
-Maven module that contains server components for the JMemcached application
+# jmemcached-server
+Maven module that contains server-side components for the JMemcached application.

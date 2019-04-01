@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.protocol.model.Response;
 
 /**
@@ -23,7 +24,9 @@ public interface RequestProcessor {
 	 * 
 	 * @param clientInput  {@link InputStream} to read {@link Request} from.
 	 * @param clientOutput {@link OutputStream} to write {@link Response} to.
-	 * @throws IOException
+	 * @throws IOException         if Input/Output error occurred during
+	 *                             reading/writing client request/server response
+	 * @throws JMemcachedException if error occurred during handling client request.
 	 */
 	void process(InputStream clientInput, OutputStream clientOutput) throws IOException;
 }

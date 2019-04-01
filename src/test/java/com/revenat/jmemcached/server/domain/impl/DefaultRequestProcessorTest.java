@@ -22,6 +22,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.protocol.RequestReader;
 import com.revenat.jmemcached.protocol.ResponseWriter;
 import com.revenat.jmemcached.protocol.model.Command;
@@ -90,5 +91,12 @@ public class DefaultRequestProcessorTest {
 		verify(reader, atLeast(1)).readFrom(any(InputStream.class));
 		verify(handler, atLeast(1)).handle(any(Request.class));
 		verify(writer, atLeast(1)).writeTo(any(OutputStream.class), any(Response.class));
+	}
+	
+	@Test(expected = JMemcachedException.class)
+	public void shouldThrowJMemcachedExceptionIfRequestProcessingFailed() throws Exception {
+		when(handler.handle(any(Request.class))).thenThrow(RuntimeException.class);
+		
+		processor.process(clientInput, clientOutput);
 	}
 }

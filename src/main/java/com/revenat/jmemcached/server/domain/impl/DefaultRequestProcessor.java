@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.protocol.RequestReader;
 import com.revenat.jmemcached.protocol.ResponseWriter;
 import com.revenat.jmemcached.protocol.model.Request;
@@ -43,7 +44,7 @@ class DefaultRequestProcessor implements RequestProcessor {
 			responseWriter.writeTo(clientOutput, response);
 			LOGGER.debug("Command {} -> {}", request, response);
 		} catch (RuntimeException e) {
-			LOGGER.error("Handle request failed: " + e.getMessage(), e);
+			throw new JMemcachedException("Process request failed", e);
 		}
 	}
 }
