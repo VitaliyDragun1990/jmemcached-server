@@ -1,25 +1,28 @@
-package com.revenat.jmemcached.server.domain;
+package com.revenat.jmemcached.server.domain.impl;
 
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import com.revenat.jmemcached.exception.JMemcachedConfigException;
+import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
+import com.revenat.jmemcached.server.domain.ServerConfig;
+import com.revenat.jmemcached.server.domain.ServerConnectionManager;
 
 /**
  * This interface represents high-level abstraction responsible for holding and
- * providing access to server-specific components. It holds {@link ServerSocket}
- * and {@link ServerConnectionManager} instances and can provide access to them
- * for other server components that need them. It also responsible for creating
- * new instances of the {@link ClientConnectionHandler} component. After
- * finishing work with {@link ServerContext} it should be mandatory closed by
- * calling its {@link #close()} method, which in turn closes
+ * providing access to more low-level server-specific components. It holds
+ * {@link ServerSocket} and {@link ServerConnectionManager} instances and can
+ * provide access to them for server high-level components that need them. It also
+ * responsible for creating new instances of the {@link ClientConnectionHandler}
+ * component. After finishing work with {@link ServerContext} it should be
+ * mandatory closed by calling its {@link #close()} method, which in turn closes
  * {@link ServerSocket} and {@link ServerConnectionManager} instances
  * {@link ServerContext} provide access to.
  * 
  * @author Vitaly Dragun
  *
  */
-public interface ServerContext extends AutoCloseable {
+interface ServerContext extends AutoCloseable {
 
 	/**
 	 * Provide access to a server socket, bound to the port with number received by

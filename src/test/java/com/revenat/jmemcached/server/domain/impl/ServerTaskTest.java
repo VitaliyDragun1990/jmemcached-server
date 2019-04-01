@@ -21,7 +21,6 @@ import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.Server;
 import com.revenat.jmemcached.server.domain.ServerConnectionManager;
-import com.revenat.jmemcached.server.domain.ServerContext;
 import com.revenat.jmemcached.server.domain.exception.ConnectionRejectedException;
 
 @RunWith(MockitoJUnitRunner.Silent.class)

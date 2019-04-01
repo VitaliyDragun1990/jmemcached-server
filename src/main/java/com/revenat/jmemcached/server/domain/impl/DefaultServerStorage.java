@@ -65,7 +65,7 @@ class DefaultServerStorage implements ServerStorage {
 
 		byte[] oldData = storage.put(key, ttl, data);
 		Status status = oldData == null ? Status.ADDED : Status.REPLACED;
-		LOGGER.debug("Data with key {} was {} in storage", key, status);
+		LOGGER.debug("Data with key '{}' was {} in the storage", key, status);
 		return status;
 	}
 
@@ -86,10 +86,10 @@ class DefaultServerStorage implements ServerStorage {
 
 		byte[] data = storage.get(key);
 		if (data == null) {
-			LOGGER.debug("Data with key {} was not found in storage", key);
+			LOGGER.debug("Data with key '{}' was not found in the storage", key);
 			return new byte[0];
 		}
-		LOGGER.debug("Data with key {} was retrieved from storage", key);
+		LOGGER.debug("Data with key '{}' was retrieved from the storage", key);
 		return data;
 	}
 
@@ -99,7 +99,7 @@ class DefaultServerStorage implements ServerStorage {
 
 		byte[] data =  storage.remove(key);
 		Status status = data != null ? Status.REMOVED : Status.NOT_FOUND;
-		LOGGER.debug("Data with key {} was {} in/from storage", key, status);
+		LOGGER.debug("Data with key '{}' was {} in/from the storage", key, status);
 		return status;
 	}
 
@@ -215,7 +215,7 @@ class DefaultServerStorage implements ServerStorage {
 			LOGGER.debug("{} started with interval {} millis", Thread.currentThread().getName(),
 					clearDataIntervalMillis);
 			while (notInterrupted()) {
-				LOGGER.trace("Invoke clearing job");
+				LOGGER.trace("Invoke cleaning job");
 				clearExpiredItems();
 				try {
 					sleepUntilNextCheck();

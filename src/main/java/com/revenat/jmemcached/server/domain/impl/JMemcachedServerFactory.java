@@ -5,7 +5,6 @@ import java.util.Properties;
 
 import com.revenat.jmemcached.server.domain.Server;
 import com.revenat.jmemcached.server.domain.ServerConfig;
-import com.revenat.jmemcached.server.domain.ServerContext;
 import com.revenat.jmemcached.server.domain.ServerFactory;
 import com.revenat.jmemcached.server.domain.ServerStorage;
 

@@ -12,11 +12,10 @@ import org.slf4j.LoggerFactory;
 import com.revenat.jmemcached.exception.JMemcachedException;
 import com.revenat.jmemcached.server.domain.Server;
 import com.revenat.jmemcached.server.domain.ServerConnectionManager;
-import com.revenat.jmemcached.server.domain.ServerContext;
 
 /**
- * This {@link Runnable} implementation represents main server task of receiving
- * client's connections and appropriately handling them.
+ * This special {@link Runnable} implementation represents main server task of
+ * receiving client's connections and appropriately handling them.
  * 
  * @author Vitaly Dragun
  *
@@ -30,7 +29,7 @@ class ServerTask implements Runnable {
 	ServerTask(ServerContext serverContext) {
 		this.serverContext = requireNonNull(serverContext, "serverContext can not be null");
 	}
-	
+
 	public void setServer(Server server) {
 		this.server = requireNonNull(server, "server can not be null");
 	}

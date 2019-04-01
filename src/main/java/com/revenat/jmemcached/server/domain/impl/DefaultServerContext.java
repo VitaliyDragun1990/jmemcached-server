@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.revenat.jmemcached.server.domain.ClientConnectionHandler;
 import com.revenat.jmemcached.server.domain.ServerConfig;
 import com.revenat.jmemcached.server.domain.ServerConnectionManager;
-import com.revenat.jmemcached.server.domain.ServerContext;
 
 /**
  * Default implementation of the {@link ServerContext} interface.
